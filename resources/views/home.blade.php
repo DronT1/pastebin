@@ -1,22 +1,9 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <title>{{env('APP_NAME')}}</title>
-        <style type="text/css">
-            div span {
-                margin-right: 10px;
-            }
-        </style>
-    </head>
-    <body>
-    <form action="{{route('createPaste')}}" method="POST">
+<x-layouts.app>
+<form action="{{route('home')}}" method="POST">
         @csrf
         <div>
             <h3>New Paste</h3>
-            <textarea name="description" id="" cols="30" rows="10"></textarea>
+            <textarea name="description" id="" class="w-full h-300"></textarea>
         </div>
         <div>
             <span>Syntax Highlighting</span>
@@ -25,6 +12,7 @@
                 <option value="2" data-language="c++">C++</option>
                 <option value="3" data-language="python">Python</option>
                 <option value="4" data-language="js">JavaScript</option>
+                <option value="5" data-language="php">PHP</option>
             </select>
         </div>
         <div>
@@ -42,16 +30,20 @@
         <div>
             <span>Paste Exposure</span>
             <select name="exposure" id="exposure">
-                <option value="public">Public</option>
-                <option value="unlisted">Unlisted</option>
-                <option value="private">Private</option>
+                <option value="1">Public</option>
+                <option value="2">Unlisted</option>
+                @auth<option value="3">Private</option>@endauth
             </select>
         </div>
         <div>
             <span>Paste title</span>
             <input type="text" name="title" placeholder="Title">
         </div>
-        <button type="submit">Create paste</button>
+        <button type="submit">Создать пасту</button>
     </form>
-    </body>
-</html>
+    @if(isset($pasteLink))
+        <div class="my-5">
+            <a href="{{$hash}}" class="">{{$pasteLink}}{{$hash}}</a>
+        </div>
+    @endif
+</x-layouts.app>
