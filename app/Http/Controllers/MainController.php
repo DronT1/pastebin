@@ -12,10 +12,14 @@ use Illuminate\Support\Str;
 class MainController extends Controller
 {
     private Request $request;
+    private $currentDate;
+    private $defaultExpirationDate;
 
-    public function __construct(Request $request) 
+    public function __construct(Request $request)
     {
         $this->request = $request;
+        $this->currentDate = Carbon::now()->toDateTimeString();
+        $this->defaultExpirationDate = Carbon::create('0001','01','01','00','00','00')->toDateTimeString();
     }
 
     public function index(Request $request)
@@ -48,7 +52,7 @@ class MainController extends Controller
     {
         $user = User::where('login', $this->request->get('login'))->first();
 
-        if (!$user || !\Hash::check($this->request->get('password'), $user->password)) {            
+        if (!$user || !\Hash::check($this->request->get('password'), $user->password)) {
             \Session::flash('error', 'Неверный логин или пароль');
             return redirect()->back();
         }
@@ -65,12 +69,51 @@ class MainController extends Controller
 
     public function myPastes()
     {
-        return view('my-pastes');
+        $pastes = Paste::where('user_id', \Auth::id())
+            ->where(function ($query) {
+                $query->where('expiration', '>', $this->currentDate)
+                    ->orWhere('expiration', '=', $this->defaultExpirationDate);
+            })->orderByDesc('id')->paginate(10);
+//        dd($pastes->toArray());
+        $pastesData = [];
+
+//        if ($pastes->count()) $pastesData = $pastes->toArray();
+        return view('my-pastes', compact('pastes'));
+    }
+
+    public function lastPastes()
+    {
+        $pastes = Paste::where('exposure', 'public')
+            ->where(function ($query) {
+                $query->where('expiration', '>', $this->currentDate)
+                    ->orWhere('expiration', '=', $this->defaultExpirationDate);
+            })->orderByDesc('id')->limit(10)->get(['id', 'title', 'hash', 'syntax', 'expiration']);
+//        dd($pastes->count());
+        if (!$pastes->count()) return json_encode(['message' => 'Результатов нет']);
+        return $pastes->toJson();
+    }
+
+    public function showPaste(Request $request, $hash)
+    {
+        $isAuth = \Auth::id();
+
+        $paste = Paste::where(function ($query) use ($hash, $isAuth) {
+           $query->where('hash', $hash);
+            if (!$isAuth) $query->where('exposure', 'not like', 'private');
+        })->where(function ($query) {
+            $query->where('expiration', '>', $this->currentDate)
+                ->orWhere('expiration', '=', $this->defaultExpirationDate);
+        })->first();
+
+        $errorAccess = 0;
+        $pasteData = [];
+        if (!$paste || $paste->exposure == 'private' && $isAuth != $paste->user_id) $errorAccess = 1;
+        else $pasteData = $paste->toArray();
+        return \view('paste', compact('errorAccess', 'pasteData'));
     }
 
     public function createPaste(Request $request)
     {
-        // dd($request->all());
         $params = [
             "syntax" => [
                 "1" => "text",
@@ -80,7 +123,7 @@ class MainController extends Controller
                 "5" => "php"
             ],
             "expiration" => [
-                "n" => null,
+                "n" => $this->defaultExpirationDate,
                 "10M" => Carbon::now()->addMinute(10)->toDateTimeString(),
                 "1H" => Carbon::now()->addHour(1)->toDateTimeString(),
                 "3H" => Carbon::now()->addHour(3)->toDateTimeString(),
@@ -94,29 +137,6 @@ class MainController extends Controller
                 "3" => "private"
             ]
         ];
-
-        // $arrExpiration = [
-        //     "n" => null,
-        //     "10M" => Carbon::now()->addMinute(10),
-        //     "1H" => Carbon::now()->addHour(1),
-        //     "3H" => Carbon::now()->addHour(3),
-        //     "1D" => Carbon::now()->addDay(1),
-        //     "1W" => Carbon::now()->addWeek(1),
-        //     "1M" => Carbon::now()->addMonth(1)
-        // ];
-
-        // $arrSyntax = [
-        //     "1" => "text",
-        //     "2" => "c++",
-        //     "3" => "python",
-        //     "4" => "js"
-        // ];
-
-        // $arrExposure = [
-        //     "1" => "public",
-        //     "2" => "unlisted",
-        //     "3" => "private"
-        // ];
 
         $objPaste = [];
 
@@ -133,8 +153,12 @@ class MainController extends Controller
         if ($userId) $objPaste["user_id"] = $userId;
         // dd($objPaste);
         $paste = Paste::create($objPaste);
-        // dd($paste);
-        return to_route('home');
-        // return view('welcome');
+        if ($paste) {
+//            $pasteLink = $request->getHttpHost();
+//            $hash = "/paste/" . $objPaste["hash"];
+//            return to_route('home', compact('pasteLink'));
+//            return \view('home', compact('pasteLink', 'hash'));
+            return to_route('paste', $objPaste['hash']);
+        }
     }
 }

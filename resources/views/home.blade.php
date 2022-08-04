@@ -1,9 +1,9 @@
 <x-layouts.app>
-<form action="{{route('createPaste')}}" method="POST">
+<form action="{{route('home')}}" method="POST">
         @csrf
         <div>
             <h3>New Paste</h3>
-            <textarea name="description" id="" cols="30" rows="10"></textarea>
+            <textarea name="description" id="" class="w-full h-300"></textarea>
         </div>
         <div>
             <span>Syntax Highlighting</span>
@@ -41,4 +41,9 @@
         </div>
         <button type="submit">Создать пасту</button>
     </form>
+    @if(isset($pasteLink))
+        <div class="my-5">
+            <a href="{{$hash}}" class="">{{$pasteLink}}{{$hash}}</a>
+        </div>
+    @endif
 </x-layouts.app>

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css"/>
   </head>
 
-  
+
 <body class="bg-gray-100 font-sans leading-normal tracking-normal">
 
 	<nav id="header" class="fixed w-full z-10 top-0">
@@ -36,15 +36,15 @@
 				<ul class="list-reset lg:flex justify-end flex-1 items-center">
 					@php
             $currentRoute = Route::currentRouteName();
-          @endphp               
+          @endphp
           @guest
           <li class="mr-3">
 						<a class="inline-block no-underline text-gray-600 py-2 px-4 @if($currentRoute === 'auth.login') text-gray-900 font-bold @endif" href="{{route('auth.login')}}">Авторизация</a>
 					</li>
           <li class="mr-3">
 						<a class="inline-block text-gray-600 no-underline py-2 px-4 @if($currentRoute === 'auth.register') text-gray-900 font-bold @endif" href="{{route('auth.register')}}">Регистрация</a>
-					</li>  
-          @endguest     
+					</li>
+          @endguest
           @auth
 					<li class="mr-3">
 						<a class="inline-block text-gray-600 no-underline py-2 px-4 @if($currentRoute === 'my-pastes') text-gray-900 font-bold @endif" href="{{route('my-pastes')}}">Мои пасты</a>
@@ -65,7 +65,55 @@
             {{session('error')}}
         </div>
     @endif
-    {{$slot}}
+        <div style="display: flex; flex-direction: row;">
+
+        <div style="flex: 1 1 auto; margin-right: 10px;">
+            {{$slot}}
+        </div>
+
+        @if ($currentRoute !== 'auth.login' && $currentRoute !== 'auth.register')
+            <script type="text/javascript">
+                window.onload = function (){
+                    // Пример отправки POST запроса:
+                    async function pastesData(url = '', data = {}) {
+                        // Default options are marked with *
+                        const response = await fetch(url, {
+                            method: 'GET', // *GET, POST, PUT, DELETE, etc.
+                            mode: 'cors', // no-cors, *cors, same-origin
+                            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+                            credentials: 'same-origin', // include, *same-origin, omit
+                            headers: {
+                                'Content-Type': 'application/json'
+                                // 'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            redirect: 'follow', // manual, *follow, error
+                            referrerPolicy: 'no-referrer', // no-referrer, *client
+                        });
+                        return await response.json(); // parses JSON response into native JavaScript objects
+                    }
+
+                    pastesData('/last-pastes')
+                        .then((data) => {
+                            let html = "<h3>Последние пасты:</h3><ul>";
+                            data.map((obj, index) => {
+                                if (obj.expiration == "0001-01-01 00:00:00") obj.expiration = "Never";
+                                html += "<li style='border-top: 1px solid gray;'><a target='_blank' style='color: #2063c7' href='/paste/" + obj.hash + "'>" + obj.title + "</a>";
+                                html += "<div class='details'>" + obj.syntax + " | " + obj.expiration + "</div>";
+                                html += "</li>";
+                                // console.log(obj);
+
+                            });
+                            html += "</ul>";
+                            document.getElementById("public-pastes").innerHTML = html;
+                            // console.log(data); // JSON data parsed by `response.json()` call
+                    });
+                }
+            </script>
+            <div id="public-pastes" style="">
+
+            </div>
+        </div>
+        @endif
 	</div>
 	<!--/container-->
 
