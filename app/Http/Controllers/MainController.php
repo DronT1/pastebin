@@ -22,6 +22,12 @@ class MainController extends Controller
         $this->defaultExpirationDate = Carbon::create('0001','01','01','00','00','00')->toDateTimeString();
     }
 
+    public function toNeverTime($stringTime)
+    {
+        if ($stringTime == "0001-01-01 00:00:00") $stringTime = "Никогда";
+        return $stringTime;
+    }
+
     public function index(Request $request)
     {
         return view('home');
@@ -76,9 +82,20 @@ class MainController extends Controller
             })->orderByDesc('id')->paginate(10);
 //        dd($pastes->toArray());
         $pastesData = [];
-
+//    dd($pastes);
 //        if ($pastes->count()) $pastesData = $pastes->toArray();
         return view('my-pastes', compact('pastes'));
+    }
+
+    public function myLastPastes()
+    {
+        $pastes = Paste::where('user_id', \Auth::id())
+            ->where(function ($query) {
+                $query->where('expiration', '>', $this->currentDate)
+                    ->orWhere('expiration', '=', $this->defaultExpirationDate);
+            })->orderByDesc('id')->limit(10)->get(['id', 'title', 'hash', 'syntax', 'expiration']);
+        if (!$pastes->count()) return json_encode(['message' => 'Результатов нет']);
+        return $pastes->toJson();
     }
 
     public function lastPastes()
@@ -109,6 +126,8 @@ class MainController extends Controller
         $pasteData = [];
         if (!$paste || $paste->exposure == 'private' && $isAuth != $paste->user_id) $errorAccess = 1;
         else $pasteData = $paste->toArray();
+        $pasteData['expiration'] = $this->toNeverTime($pasteData['expiration']);
+//        dd($pasteData);
         return \view('paste', compact('errorAccess', 'pasteData'));
     }
 
@@ -120,7 +139,8 @@ class MainController extends Controller
                 "2" => "c++",
                 "3" => "python",
                 "4" => "js",
-                "5" => "php"
+                "5" => "php",
+                "6" => "html"
             ],
             "expiration" => [
                 "n" => $this->defaultExpirationDate,
@@ -146,19 +166,17 @@ class MainController extends Controller
             }
         }
 
-        $objPaste["description"] = $request->get("description");
+        $objPaste["description"] = trim($request->get("description"));
         $objPaste["title"] = $request->get("title");
         $objPaste["hash"] = Str::random(8);
         $userId = \Auth::id();
         if ($userId) $objPaste["user_id"] = $userId;
-        // dd($objPaste);
         $paste = Paste::create($objPaste);
         if ($paste) {
-//            $pasteLink = $request->getHttpHost();
-//            $hash = "/paste/" . $objPaste["hash"];
-//            return to_route('home', compact('pasteLink'));
-//            return \view('home', compact('pasteLink', 'hash'));
             return to_route('paste', $objPaste['hash']);
+        } else {
+            \Session::flash('error', 'Ошибка создания пасты');
+            return redirect()->back();
         }
     }
 }

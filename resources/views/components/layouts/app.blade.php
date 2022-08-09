@@ -6,6 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>{{env("APP_NAME")}}</title>
     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css"/>
+      <!-- Подключаем стили для подсветки кода: -->
+{{--      <link href="prettify.css" rel="stylesheet">--}}
+      <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/styles/default.min.css">
+      <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script>
   </head>
 
 
@@ -67,7 +72,7 @@
     @endif
         <div style="display: flex; flex-direction: row;">
 
-        <div style="flex: 1 1 auto; margin-right: 10px;">
+        <div style="flex: 1 1 auto; margin-right: 10px; width: 80%;">
             {{$slot}}
         </div>
 
@@ -96,7 +101,7 @@
                         .then((data) => {
                             let html = "<h3>Последние пасты:</h3><ul>";
                             data.map((obj, index) => {
-                                if (obj.expiration == "0001-01-01 00:00:00") obj.expiration = "Never";
+                                if (obj.expiration == "0001-01-01 00:00:00") obj.expiration = "Никогда";
                                 html += "<li style='border-top: 1px solid gray;'><a target='_blank' style='color: #2063c7' href='/paste/" + obj.hash + "'>" + obj.title + "</a>";
                                 html += "<div class='details'>" + obj.syntax + " | " + obj.expiration + "</div>";
                                 html += "</li>";
@@ -107,10 +112,33 @@
                             document.getElementById("public-pastes").innerHTML = html;
                             // console.log(data); // JSON data parsed by `response.json()` call
                     });
+
+                    @auth
+                    pastesData('/my-last-pastes')
+                        .then((data) => {
+                            let div = document.createElement('div');
+                            div.id = "my-last-pastes";
+                            div.style.border = "1px solid grey";
+                            div.style.padding = "2px";
+                            let html = "<h3>Мои последние пасты:</h3><ul>";
+                            data.map((obj, index) => {
+                                if (obj.expiration == "0001-01-01 00:00:00") obj.expiration = "Никогда";
+                                html += "<li style='border-top: 1px solid gray;'><a target='_blank' style='color: #2063c7' href='/paste/" + obj.hash + "'>" + obj.title + "</a>";
+                                html += "<div class='details'>" + obj.syntax + " | " + obj.expiration + "</div>";
+                                html += "</li>";
+                                // console.log(obj);
+
+                            });
+                            html += "</ul>";
+                            div.innerHTML = html;
+                            // document.getElementById("public-pastes").innerHTML = html;
+                            document.getElementById("public-pastes").after(div);
+                        });
+                    @endauth
                 }
             </script>
-            <div id="public-pastes" style="">
-
+            <div>
+                <div id="public-pastes" style="margin-bottom: 10px;"></div>
             </div>
         </div>
         @endif
@@ -196,7 +224,6 @@
 			document.getElementById("nav-content").classList.toggle("hidden");
 		}
 	</script>
-
 </body>
 
 </html>

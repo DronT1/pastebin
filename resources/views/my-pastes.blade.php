@@ -3,7 +3,7 @@
         @if (!$pastes->count()) <h3>Паст нет</h3> @endif
         <ul>
         @foreach ($pastes as $pasta)
-            <li>{{$pasta->id}} | {{$pasta->title}}</li>
+            <li>{{$loop->iteration}} | <a href="/paste/{{$pasta->hash}}" style="text-decoration: underline;">{{$pasta->title}}</a></li>
         @endforeach
         </ul>
         {{$pastes->links()}}

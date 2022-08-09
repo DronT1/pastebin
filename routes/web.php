@@ -31,4 +31,5 @@ Route::middleware('guest')->group(function(){
 Route::middleware('auth')->group(function(){
     Route::get('/my-pastes/{page?}', [MainController::class, 'myPastes'])->name('my-pastes');
     Route::get('/logout', [MainController::class, 'logout'])->name('auth.logout');
+    Route::get('/my-last-pastes', [MainController::class, 'myLastPastes'])->name('my-last-pastes');
 });
