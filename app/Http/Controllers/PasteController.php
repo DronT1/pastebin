@@ -9,13 +9,11 @@ use Illuminate\Support\Str;
 
 class PasteController extends Controller
 {
-    private Request $request;
     private $currentDate;
     private $defaultExpirationDate;
 
-    public function __construct(Request $request)
+    public function __construct()
     {
-        $this->request = $request;
         $this->currentDate = Carbon::now()->toDateTimeString();
         $this->defaultExpirationDate = Carbon::create('0001','01','01','00','00','00')->toDateTimeString();
     }
