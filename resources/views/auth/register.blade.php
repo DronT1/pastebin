@@ -9,7 +9,7 @@
             <input type="password" name="password" placeholder="Пароль">
         </label>
         <label class="border text-lg rounded-lg px-5 py-1 w-full my-2 block">
-            <input type="password" name="password-confirmation" placeholder="Повторите пароль">
+            <input type="password" name="password_confirmation" placeholder="Повторите пароль">
         </label>
         <button type="submit" class="border bg-blue-500 text-white text-lg rounded-lg px-5 py-1 w-full my-2 block">Зарегистрироваться</button>
     </form>
