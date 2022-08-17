@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MainController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,10 +24,10 @@ Route::get('/paste/{hash}', [MainController::class, 'showPaste'])->name('paste')
 Route::post('/', [MainController::class, 'createPaste'])->name('home');
 Route::get('/last-pastes', [MainController::class, 'lastPastes'])->name('last-pastes');
 Route::middleware('guest')->group(function(){
-    Route::get('/register', [MainController::class, 'register'])->name('auth.register');
-    Route::post('/register', [MainController::class, 'registration'])->name('auth.register');
-    Route::get('/login', [MainController::class, 'login'])->name('auth.login');
-    Route::post('/login', [MainController::class, 'auth'])->name('auth.login');
+    Route::get('/register', [UserController::class, 'register'])->name('auth.register');
+    Route::post('/register', [UserController::class, 'registration'])->name('auth.register');
+    Route::get('/login', [UserController::class, 'login'])->name('auth.login');
+    Route::post('/login', [UserController::class, 'auth'])->name('auth.login');
 });
 Route::middleware('auth')->group(function(){
     Route::get('/my-pastes/{page?}', [MainController::class, 'myPastes'])->name('my-pastes');
