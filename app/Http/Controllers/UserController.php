@@ -42,16 +42,18 @@ class UserController extends Controller
         return \view('auth.login');
     }
 
-    public function auth()
+    public function auth(Request $request)
     {
-        $user = User::where('login', $this->request->get('login'))->first();
-
-        if (!$user || !\Hash::check($this->request->get('password'), $user->password)) {
-            \Session::flash('error', 'Неверный логин или пароль');
-            return redirect()->back();
-        }
-
-        \Auth::login($user);
+//        $user = User::where('login', $this->request->get('login'))->first();
+//
+//        if (!$user || !\Hash::check($this->request->get('password'), $user->password)) {
+//            \Session::flash('error', 'Неверный логин или пароль');
+//            return redirect()->back();
+//        }
+        $data = $request->all();
+        $user = $this->userService->auth($data);
+//        dd($user);
+//        \Auth::login($user);
         return to_route('home');
     }
 

@@ -16,4 +16,16 @@ class UserService
 
         return $user;
     }
+
+    public function auth(array $data)
+    {
+        $user = User::where('login', $data['login'])->first();
+
+        if (!$user || !\Hash::check($data['password'], $user->password)) {
+            \Session::flash('error', 'Неверный логин или пароль');
+            return redirect()->back();
+        }
+
+        return $user;
+    }
 }
