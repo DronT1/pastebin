@@ -4,10 +4,11 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class UserService
 {
-    public function registration(array $data) : User
+    public function registration(array $data)
     {
         $user = User::create([
             'login' => $data['login'],
@@ -22,8 +23,7 @@ class UserService
         $user = User::where('login', $data['login'])->first();
 
         if (!$user || !\Hash::check($data['password'], $user->password)) {
-            \Session::flash('error', 'Неверный логин или пароль');
-            return redirect()->back();
+            return false;
         }
 
         return $user;

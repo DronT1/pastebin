@@ -3,131 +3,81 @@
 namespace App\Http\Controllers;
 
 use App\Models\Paste;
+use App\Services\PasteService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class PasteController extends Controller
 {
-    private $currentDate;
-    private $defaultExpirationDate;
+    protected $pasteService;
 
-    public function __construct()
+    public function __construct(PasteService $pasteService)
     {
-        $this->currentDate = Carbon::now()->toDateTimeString();
-        $this->defaultExpirationDate = Carbon::create('0001','01','01','00','00','00')->toDateTimeString();
-    }
-
-    public function toNeverTime($stringTime)
-    {
-        if ($stringTime == "0001-01-01 00:00:00") $stringTime = "Никогда";
-        return $stringTime;
+        $this->pasteService = $pasteService;
     }
 
     public function myPastes()
     {
-        $pastes = Paste::where('user_id', \Auth::id())
-            ->where(function ($query) {
-                $query->where('expiration', '>', $this->currentDate)
-                    ->orWhere('expiration', '=', $this->defaultExpirationDate);
-            })->orderByDesc('id')->paginate(10);
-//        dd($pastes->toArray());
-        $pastesData = [];
-//    dd($pastes);
-//        if ($pastes->count()) $pastesData = $pastes->toArray();
+        $pastes = $this->pasteService->myPastes();
         return view('my-pastes', compact('pastes'));
     }
 
     public function myLastPastes()
     {
-        $pastes = Paste::where('user_id', \Auth::id())
-            ->where(function ($query) {
-                $query->where('expiration', '>', $this->currentDate)
-                    ->orWhere('expiration', '=', $this->defaultExpirationDate);
-            })->orderByDesc('id')->limit(10)->get(['id', 'title', 'hash', 'syntax', 'expiration']);
-        if (!$pastes->count()) return json_encode(['message' => 'Результатов нет']);
+        $pastes = $this->pasteService->myLastPastes();
+
+        if (!$pastes->count()) {
+            return json_encode(['message' => 'Результатов нет']);
+        }
+
         return $pastes->toJson();
     }
 
     public function lastPastes()
     {
-        $pastes = Paste::where('exposure', 'public')
-            ->where(function ($query) {
-                $query->where('expiration', '>', $this->currentDate)
-                    ->orWhere('expiration', '=', $this->defaultExpirationDate);
-            })->orderByDesc('id')->limit(10)->get(['id', 'title', 'hash', 'syntax', 'expiration']);
-//        dd($pastes->count());
-        if (!$pastes->count()) return json_encode(['message' => 'Результатов нет']);
+        $pastes = $this->pasteService->lastPastes();
+
+        if (!$pastes->count()) {
+            return json_encode(['message' => 'Результатов нет']);
+        }
+
         return $pastes->toJson();
     }
 
-    public function showPaste(Request $request, $hash)
+    public function showPaste($hash)
     {
-        $isAuth = \Auth::id();
+        $userId = Auth::id();
+        $paste = $this->pasteService->showPaste($hash, $userId);
 
-        $paste = Paste::where(function ($query) use ($hash, $isAuth) {
-            $query->where('hash', $hash);
-            if (!$isAuth) $query->where('exposure', 'not like', 'private');
-        })->where(function ($query) {
-            $query->where('expiration', '>', $this->currentDate)
-                ->orWhere('expiration', '=', $this->defaultExpirationDate);
-        })->first();
+        if (!$paste) {
+            $errorAccess = 1;
+            return view('paste', compact('errorAccess'));
+        }
 
-        $errorAccess = 0;
-        $pasteData = [];
-        if (!$paste || $paste->exposure == 'private' && $isAuth != $paste->user_id) $errorAccess = 1;
-        else $pasteData = $paste->toArray();
-        $pasteData['expiration'] = $this->toNeverTime($pasteData['expiration']);
-//        dd($pasteData);
-        return \view('paste', compact('errorAccess', 'pasteData'));
+        return \view('paste', compact('paste'));
     }
 
     public function createPaste(Request $request)
     {
-        $params = [
-            "syntax" => [
-                "1" => "text",
-                "2" => "c++",
-                "3" => "python",
-                "4" => "js",
-                "5" => "php",
-                "6" => "html"
-            ],
-            "expiration" => [
-                "n" => $this->defaultExpirationDate,
-                "10M" => Carbon::now()->addMinute(10)->toDateTimeString(),
-                "1H" => Carbon::now()->addHour(1)->toDateTimeString(),
-                "3H" => Carbon::now()->addHour(3)->toDateTimeString(),
-                "1D" => Carbon::now()->addDay(1)->toDateTimeString(),
-                "1W" => Carbon::now()->addWeek(1)->toDateTimeString(),
-                "1M" => Carbon::now()->addMonth(1)->toDateTimeString()
-            ],
-            "exposure" => [
-                "1" => "public",
-                "2" => "unlisted",
-                "3" => "private"
-            ]
-        ];
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+            'syntax' => ['integer'],
+            'exposure' => ['integer'],
+            'expiration' => ''
+        ]);
 
-        $objPaste = [];
+        $userId = Auth::id();
+        $paste = $this->pasteService->createPaste($data, $userId);
 
-        foreach ($request->all() as $key => $item) {
-            if (array_key_exists($key, $params)) {
-                $objPaste[$key] = $params[$key][$item];
-            }
+        if (!$paste) {
+            return redirect()->back()->withErrors([
+                'create-paste' => 'Ошибка создания пасты'
+            ]);
         }
 
-        $objPaste["description"] = trim($request->get("description"));
-        $objPaste["title"] = $request->get("title");
-        $objPaste["hash"] = Str::random(8);
-        $userId = \Auth::id();
-        if ($userId) $objPaste["user_id"] = $userId;
-        $paste = Paste::create($objPaste);
-        if ($paste) {
-            return to_route('paste', $objPaste['hash']);
-        } else {
-            \Session::flash('error', 'Ошибка создания пасты');
-            return redirect()->back();
-        }
+        return to_route('paste', $paste);
     }
 }

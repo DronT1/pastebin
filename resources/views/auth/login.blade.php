@@ -1,5 +1,8 @@
 <x-layouts.app>
     <h1 class="text-4xl mb-5">Авторизация</h1>
+    <div class="text-red">
+        {{$errors->first()}}
+    </div>
     <form action="{{route("auth.login")}}" method="POST">
         @csrf
         <label class="border text-lg rounded-lg px-5 py-1 w-full my-2 block">

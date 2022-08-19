@@ -1,4 +1,13 @@
 <x-layouts.app>
+@if($errors->any())
+    <div class="w-full bg-red-700 text-white rounded-lg py-5 px-5">
+        <ul>
+            @foreach($errors->all() as $error)
+                <li>{{$error}}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 <form action="{{route('home')}}" method="POST">
         @csrf
         <div>
@@ -20,12 +29,12 @@
             <span>Срок окончания пасты</span>
             <select name="expiration" id="expiration">
                 <option value="n">Никогда</option>
-                <option value="10M">10 Минут</option>
-                <option value="1H">1 Час</option>
-                <option value="3H">3 Часа</option>
-                <option value="1D">1 День</option>
-                <option value="1W">1 Неделя</option>
-                <option value="1M">1 Месяц</option>
+                <option value="10m">10 Минут</option>
+                <option value="1h">1 Час</option>
+                <option value="3h">3 Часа</option>
+                <option value="1d">1 День</option>
+                <option value="1w">1 Неделя</option>
+                <option value="1mo">1 Месяц</option>
             </select>
         </div>
         <div>

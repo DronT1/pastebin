@@ -65,11 +65,6 @@
 
 	<!--Container-->
 	<div class="container w-full md:max-w-3xl mx-auto py-20">
-    @if(session('error'))
-        <div class="w-full bg-red-700 text-white rounded-lg py-5 px-5">
-            {{session('error')}}
-        </div>
-    @endif
         <div style="display: flex; flex-direction: row;">
 
         <div style="flex: 1 1 auto; margin-right: 10px; width: 80%;">
