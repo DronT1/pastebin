@@ -65,7 +65,7 @@ class PasteController extends Controller
             'description' => ['required', 'string'],
             'syntax' => ['integer'],
             'exposure' => ['integer'],
-            'expiration' => ''
+            'expiration' => 'regex:/n?(\d*[m,h,d,w, mo])?/'
         ]);
 
         $userId = Auth::id();

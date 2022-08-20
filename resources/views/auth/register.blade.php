@@ -1,5 +1,14 @@
 <x-layouts.app>
     <h1 class="text-4xl mb-5">Регистрация</h1>
+    @if ($errors->any())
+        <div>
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{$error}}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <form action="{{route("auth.register")}}" method="POST">
         @csrf
         <label class="border text-lg rounded-lg px-5 py-1 w-full my-2 block">
