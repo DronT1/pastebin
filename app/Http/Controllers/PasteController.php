@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Paste;
 use App\Services\PasteService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class PasteController extends Controller
 {
@@ -20,13 +17,15 @@ class PasteController extends Controller
 
     public function myPastes()
     {
-        $pastes = $this->pasteService->myPastes();
+        $userId = Auth::id();
+        $pastes = $this->pasteService->myPastes($userId);
         return view('my-pastes', compact('pastes'));
     }
 
     public function myLastPastes()
     {
-        $pastes = $this->pasteService->myLastPastes();
+        $userId = Auth::id();
+        $pastes = $this->pasteService->myLastPastes($userId);
 
         if (!$pastes->count()) {
             return json_encode(['message' => 'Результатов нет']);

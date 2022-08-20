@@ -96,16 +96,13 @@
                         .then((data) => {
                             let html = "<h3>Последние пасты:</h3><ul>";
                             data.map((obj, index) => {
-                                if (obj.expiration == "0001-01-01 00:00:00") obj.expiration = "Никогда";
+                                if (obj.expiration === null) obj.expiration = "Никогда";
                                 html += "<li style='border-top: 1px solid gray;'><a target='_blank' style='color: #2063c7' href='/paste/" + obj.hash + "'>" + obj.title + "</a>";
                                 html += "<div class='details'>" + obj.syntax + " | " + obj.expiration + "</div>";
                                 html += "</li>";
-                                // console.log(obj);
-
                             });
                             html += "</ul>";
                             document.getElementById("public-pastes").innerHTML = html;
-                            // console.log(data); // JSON data parsed by `response.json()` call
                     });
 
                     @auth
@@ -117,16 +114,13 @@
                             div.style.padding = "2px";
                             let html = "<h3>Мои последние пасты:</h3><ul>";
                             data.map((obj, index) => {
-                                if (obj.expiration == "0001-01-01 00:00:00") obj.expiration = "Никогда";
+                                if (obj.expiration === null) obj.expiration = "Никогда";
                                 html += "<li style='border-top: 1px solid gray;'><a target='_blank' style='color: #2063c7' href='/paste/" + obj.hash + "'>" + obj.title + "</a>";
                                 html += "<div class='details'>" + obj.syntax + " | " + obj.expiration + "</div>";
                                 html += "</li>";
-                                // console.log(obj);
-
                             });
                             html += "</ul>";
                             div.innerHTML = html;
-                            // document.getElementById("public-pastes").innerHTML = html;
                             document.getElementById("public-pastes").after(div);
                         });
                     @endauth

@@ -4,9 +4,7 @@ namespace App\Services;
 
 use App\Models\Paste;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use function PHPUnit\Framework\isNull;
 
 class PasteService
 {
@@ -19,40 +17,50 @@ class PasteService
 
     public function toNeverTime($stringTime)
     {
-        if ($stringTime === null) $stringTime = "Никогда";
+        if ($stringTime === null) {
+            $stringTime = "Никогда";
+        }
         return $stringTime;
     }
 
-    public function myPastes()
+    public function queryPaste($userId = null, $paginate = null, $limit = null)
     {
-        $pastes = Paste::where('user_id', \Auth::id())
-            ->where(function ($query) {
-                $query->where('expiration', '>', $this->currentDate)
-                    ->orWhere('expiration', '=', null);
-            })->orderByDesc('id')->paginate(10);
+        $pastes = Paste::where(function ($query) use ($userId) {
+            if ($userId) {
+                $query->where('user_id', $userId);
+            } else {
+                $query->where('exposure', 'public');
+            }})->where(function ($query) {
+            $query->where('expiration', '>', $this->currentDate)
+                ->orWhere('expiration', '=', null);
+        })->orderByDesc('id');
+
+        if ($paginate && !$limit) {
+            $pastes = $pastes->paginate($paginate);
+        }
+
+        if ($limit) {
+            $pastes = $pastes->limit($limit)->get(['id', 'title', 'hash', 'syntax', 'expiration']);
+        }
 
         return $pastes;
     }
 
-    public function myLastPastes()
+    public function myPastes($userId)
     {
-        $pastes = Paste::where('user_id', \Auth::id())
-            ->where(function ($query) {
-                $query->where('expiration', '>', $this->currentDate)
-                    ->orWhere('expiration', '=', null);
-            })->orderByDesc('id')->limit(10)->get(['id', 'title', 'hash', 'syntax', 'expiration']);
+        $pastes = $this->queryPaste($userId, 10);
+        return $pastes;
+    }
 
+    public function myLastPastes($userId)
+    {
+        $pastes = $this->queryPaste($userId, null, 10);
         return $pastes;
     }
 
     public function lastPastes()
     {
-        $pastes = Paste::where('exposure', 'public')
-            ->where(function ($query) {
-                $query->where('expiration', '>', $this->currentDate)
-                    ->orWhere('expiration', '=', null);
-            })->orderByDesc('id')->limit(10)->get(['id', 'title', 'hash', 'syntax', 'expiration']);
-
+        $pastes = $this->queryPaste(null, null, 10);
         return $pastes;
     }
 
